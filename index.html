@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="SpendSense"/>
+<meta name="theme-color" content="#0a0a14"/>
+<meta name="description" content="SpendSense — Smart money tracking for India"/>
+<title>SpendSense — Smart Money Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root{
+  --bg:#0a0a14;--s1:#0f0f1e;--s2:#151528;--s3:#1c1c35;
+  --b1:#1e1e38;--b2:#282848;--b3:#363660;
+  --gold:#f5c842;--gold2:#ffe998;
+  --green:#3ecf8e;--red:#ff6b6b;--blue:#5b9cf6;
+  --purple:#9f7aea;--orange:#f6993f;--teal:#38d9d9;
+  --text:#f0eadc;--t2:#9090b0;--t3:#505070;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body,#root{height:100%;background:var(--bg);}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;}
+#root{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative;}
+input,select,button{font-family:'Plus Jakarta Sans',sans-serif;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input::placeholder{color:var(--t3);}
+input[type=date]{color-scheme:dark;}
+canvas{display:block;}
+::-webkit-scrollbar{display:none;}
+
+.page{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 20px;}
+
+/* Nav */
+.bnav{display:flex;align-items:flex-end;padding:8px 8px calc(8px + var(--safe-b));background:var(--s1);border-top:1px solid var(--b1);flex-shrink:0;z-index:10;}
+.nt{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:none;background:none;color:var(--t3);font-size:10px;font-weight:700;letter-spacing:.3px;border-radius:10px;transition:color .2s;cursor:pointer;}
+.nt .ni{font-size:22px;transition:transform .2s;}
+.nt.on{color:var(--gold);}
+.nt.on .ni{transform:scale(1.1);}
+.nc{width:56px;height:56px;flex-shrink:0;border-radius:18px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a14;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:0 8px 24px rgba(245,200,66,.4);transition:all .15s;cursor:pointer;}
+.nc:active{transform:scale(.92);}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:16px;margin-bottom:10px;}
+.ctop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.clabel{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;font-weight:500;}
+.clink{font-size:12px;font-weight:700;color:var(--gold);background:none;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+
+/* Balance */
+.balcard{margin:0 14px 12px;padding:20px;background:linear-gradient(135deg,#10102a,#1a1a38);border:1px solid rgba(245,200,66,.15);border-radius:22px;position:relative;overflow:hidden;flex-shrink:0;}
+.balcard::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(245,200,66,.08),transparent 70%);}
+.balcard::after{content:'';position:absolute;bottom:-50px;left:-30px;width:170px;height:170px;background:radial-gradient(circle,rgba(159,122,234,.07),transparent 70%);}
+.bal-eye{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--t3);text-transform:uppercase;margin-bottom:5px;}
+.bal-num{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1;}
+.bp{color:var(--green);}.bn{color:var(--red);}.bz{color:var(--text);}
+.bal-carry{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);margin-top:7px;display:flex;align-items:center;gap:6px;}
+.cpill{padding:2px 9px;border-radius:50px;background:var(--b1);font-size:10px;font-weight:700;}
+.bstats{display:flex;gap:6px;margin-top:14px;}
+.bs{flex:1;background:rgba(255,255,255,.05);border-radius:12px;padding:10px;}
+.bsl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;margin-bottom:3px;}
+.bsv{font-size:15px;font-weight:800;}
+
+/* Month nav */
+.msel{display:flex;align-items:center;gap:8px;padding:0 14px;margin-bottom:10px;flex-shrink:0;}
+.marr{width:32px;height:32px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;color:var(--t2);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.marr:active{background:var(--s3);}
+.mlab{flex:1;text-align:center;font-size:14px;font-weight:700;color:var(--t2);}
+.mtoday{padding:5px 12px;background:var(--b1);border:none;border-radius:8px;font-size:11px;font-weight:700;color:var(--t3);cursor:pointer;}
+
+/* Header */
+.hdr{padding:calc(48px + var(--safe-t)) 16px 12px;display:flex;align-items:flex-end;justify-content:space-between;flex-shrink:0;}
+.heye{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:3px;}
+.htitle{font-size:22px;font-weight:800;}
+.hbtn{padding:9px 14px;background:var(--s2);border:1px solid var(--b1);border-radius:12px;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;}
+.hbtn:active{background:var(--s3);}
+
+/* Transactions */
+.txi{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--b1);cursor:pointer;}
+.txi:last-child{border-bottom:none;}
+.txic{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.txin{flex:1;min-width:0;}
+.txcat{font-size:14px;font-weight:700;}
+.txmeta{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.txamt{font-size:15px;font-weight:800;}
+.txbtns{display:flex;gap:4px;}
+.tb{width:28px;height:28px;border-radius:9px;border:none;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.tb:active{transform:scale(.9);}
+.tbe{background:rgba(91,156,246,.15);color:var(--blue);}
+.tbd{background:rgba(255,107,107,.15);color:var(--red);}
+.rchip{font-size:9px;padding:2px 6px;border-radius:50px;background:rgba(91,156,246,.15);color:var(--blue);font-family:'JetBrains Mono',monospace;margin-left:5px;}
+.tchip{font-size:9px;padding:2px 6px;border-radius:50px;background:var(--b2);color:var(--t2);font-family:'JetBrains Mono',monospace;margin-left:4px;}
+
+/* Forms */
+.flbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;margin-bottom:7px;}
+.fin{width:100%;padding:13px 15px;background:var(--s2);border:1.5px solid var(--b2);border-radius:14px;color:var(--text);font-size:15px;font-weight:600;margin-bottom:14px;}
+.fin:focus{border-color:var(--gold);outline:none;}
+.amtw{position:relative;margin-bottom:16px;}
+.rsym{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:24px;font-weight:800;color:var(--gold);}
+.amtin{width:100%;padding:17px 17px 17px 46px;background:var(--s2);border:1.5px solid var(--b2);border-radius:15px;color:var(--text);font-size:32px;font-weight:800;letter-spacing:-1px;}
+.amtin:focus{border-color:var(--gold);outline:none;}
+.sbtn{width:100%;padding:17px;border-radius:15px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a14;font-size:16px;font-weight:800;cursor:pointer;}
+.sbtn:active{opacity:.88;}
+.cbtn{width:100%;padding:13px;border-radius:13px;border:1.5px solid var(--b2);background:none;color:var(--t2);font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;}
+.gbtn{width:100%;padding:14px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a14;font-size:14px;font-weight:800;cursor:pointer;}
+
+/* Type buttons */
+.trow{display:flex;gap:8px;margin-bottom:18px;}
+.tbtn{flex:1;padding:13px 6px;border-radius:14px;border:1.5px solid var(--b1);background:var(--s2);font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--t3);cursor:pointer;}
+.tbtn .ti{font-size:22px;}
+.tbtn:active{transform:scale(.97);}
+.tse{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.4);color:var(--red);}
+.tsi{background:rgba(62,207,142,.1);border-color:rgba(62,207,142,.4);color:var(--green);}
+.tst{background:rgba(159,122,234,.1);border-color:rgba(159,122,234,.4);color:var(--purple);}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+.chip{padding:8px 13px;border-radius:50px;border:1.5px solid var(--b2);background:var(--s2);font-size:12px;font-weight:700;color:var(--t3);cursor:pointer;}
+.chip:active{transform:scale(.94);}
+.chip.on{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.1);}
+
+/* Quick amounts */
+.qrow{display:flex;gap:7px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;}
+.qamt{padding:8px 14px;border-radius:50px;border:1.5px solid var(--b2);background:var(--s2);color:var(--t2);font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer;}
+.qamt:active{background:var(--b2);}
+
+/* Budget bars */
+.bbar{margin-bottom:11px;}
+.bbrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.bblbl{font-size:13px;font-weight:700;}
+.bbval{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--t2);}
+.btrack{height:6px;background:var(--b1);border-radius:3px;overflow:hidden;}
+.bfill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+.bok{background:linear-gradient(90deg,var(--green),#80eabb);}
+.bwarn{background:linear-gradient(90deg,var(--orange),#ffc060);}
+.bover{background:linear-gradient(90deg,var(--red),#ff9090);}
+
+/* Modal */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
+.mbox{background:var(--s1);border-radius:24px 24px 0 0;padding:20px 18px calc(30px + var(--safe-b));width:100%;max-width:430px;max-height:92vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.4,0,.2,1);}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhandle{width:36px;height:4px;background:var(--b3);border-radius:2px;margin:0 auto 18px;}
+.mtitle{font-size:20px;font-weight:800;margin-bottom:5px;}
+.msub{font-size:13px;color:var(--t3);margin-bottom:18px;}
+
+/* Add page */
+.addpage{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:100%;height:100dvh;z-index:150;background:var(--bg);display:flex;flex-direction:column;animation:slideInUp .3s cubic-bezier(.4,0,.2,1);}
+@keyframes slideInUp{from{transform:translateX(-50%) translateY(100%)}to{transform:translateX(-50%) translateY(0)}}
+@keyframes pop2{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.addinner{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(40px + var(--safe-b));}
+
+/* Pills */
+.pills{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+.pill{padding:8px 14px;border-radius:50px;border:1.5px solid var(--b1);background:none;font-size:12px;font-weight:700;color:var(--t3);white-space:nowrap;cursor:pointer;flex-shrink:0;}
+.pill.on{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.1);}
+
+/* Search */
+.swrap{position:relative;margin-bottom:10px;}
+.sicon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--t3);}
+.sin{width:100%;padding:12px 14px 12px 40px;background:var(--s1);border:1.5px solid var(--b1);border-radius:13px;color:var(--text);font-size:14px;font-weight:600;}
+.sin:focus{border-color:var(--gold);outline:none;}
+
+/* Settings rows */
+.srow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--b1);}
+.srow:last-child{border-bottom:none;}
+.sico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.sinfo{flex:1;}
+.stit{font-size:14px;font-weight:700;}
+.ssub{font-size:11px;color:var(--t3);margin-top:2px;}
+.sact{padding:8px 14px;border-radius:10px;border:1.5px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;}
+
+/* Goals */
+.goalcard{background:var(--s2);border:1px solid var(--b1);border-radius:15px;padding:14px;margin-bottom:8px;}
+.gbar{height:5px;background:var(--b1);border-radius:3px;overflow:hidden;margin-top:7px;}
+.gfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .5s;}
+
+/* Bills */
+.billrow{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--b1);}
+.billrow:last-child{border-bottom:none;}
+.billico{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+
+/* Insight grid */
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.ins{background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:13px;}
+.insl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;margin-bottom:4px;}
+.insv{font-size:20px;font-weight:800;}
+.inss{font-size:10px;color:var(--t3);margin-top:2px;}
+
+/* Month bars */
+.cbrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.cblbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);width:28px;text-align:right;flex-shrink:0;}
+.cbtrack{flex:1;height:10px;background:var(--b1);border-radius:5px;overflow:hidden;position:relative;}
+.cbi{position:absolute;left:0;top:0;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),#80eabb);}
+.cbe{position:absolute;left:0;top:0;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--red),#ff9090);opacity:.75;}
+.cbval{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);width:52px;text-align:right;flex-shrink:0;}
+
+/* Misc */
+.divlbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding:11px 0 6px;}
+.empty{text-align:center;padding:28px 16px;color:var(--t3);}
+.emje{font-size:34px;margin-bottom:8px;}
+.empt{font-size:13px;line-height:1.6;}
+.toast-wrap{position:fixed;bottom:94px;left:50%;transform:translateX(-50%);z-index:400;pointer-events:none;}
+.toast{background:var(--s3);border:1px solid var(--b3);border-radius:50px;padding:11px 20px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.5);animation:fadeUp2 .28s cubic-bezier(.4,0,.2,1);}
+@keyframes fadeUp2{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.qagrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.qabt{padding:11px 6px;border-radius:13px;border:1.5px solid var(--b1);background:var(--s2);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;color:var(--t3);}
+.qabt:active{transform:scale(.93);}
+.qabt.exp{border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.06);color:var(--red);}
+.qabt.inc{border-color:rgba(62,207,142,.25);background:rgba(62,207,142,.06);color:var(--green);}
+.hchk{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px;}
+.hchk:last-child{border-bottom:none;}
+/* Confetti */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:500;overflow:hidden;}
+.confetti-piece{position:absolute;width:10px;height:10px;top:-20px;animation:confettiFall linear forwards;}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+/* Debt cards */
+.debtcard{background:var(--s2);border:1px solid var(--b1);border-radius:15px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.debticon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo,useRef,useCallback}=React;
+
+// ── CONSTANTS ──
+const CATS={
+  expense:[
+    {n:'Food',i:'🍔',c:'#f07040'},{n:'Transport',i:'🚗',c:'#5b9cf6'},
+    {n:'Housing',i:'🏠',c:'#9f7aea'},{n:'Health',i:'❤️',c:'#ff6b6b'},
+    {n:'Entertainment',i:'🎬',c:'#f6993f'},{n:'Shopping',i:'🛍️',c:'#f5c842'},
+    {n:'Bills',i:'⚡',c:'#38d9d9'},{n:'Education',i:'📚',c:'#3ecf8e'},
+    {n:'Personal',i:'💆',c:'#e080f0'},{n:'Fuel',i:'⛽',c:'#ff8c40'},
+    {n:'Groceries',i:'🛒',c:'#60e080'},{n:'Loan Payment',i:'🏦',c:'#f06b6b'},
+    {n:'Investment',i:'📈',c:'#5b9cf6'},{n:'Other',i:'📦',c:'#7080a0'},
+  ],
+  income:[
+    {n:'Salary',i:'💼',c:'#3ecf8e'},{n:'Freelance',i:'💻',c:'#5b9cf6'},
+    {n:'Business',i:'🏢',c:'#f5c842'},{n:'Gift',i:'🎁',c:'#e080f0'},
+    {n:'Rental',i:'🏘️',c:'#38d9d9'},{n:'Bonus',i:'🌟',c:'#ffd700'},
+    {n:'Other',i:'💰',c:'#7080a0'},
+  ],
+  transfer:[{n:'Transfer',i:'🔄',c:'#9f7aea'}],
+};
+const CM={};[...CATS.expense,...CATS.income,...CATS.transfer].forEach(c=>{CM[c.n]=c;});
+const QUICK=[{t:'expense',c:'Food'},{t:'expense',c:'Transport'},{t:'expense',c:'Shopping'},{t:'expense',c:'Bills'},{t:'income',c:'Salary'},{t:'income',c:'Freelance'},{t:'expense',c:'Health'},{t:'expense',c:'Entertainment'}];
+const QAMTS=[50,100,200,500,1000,2000,5000,10000,20000,50000];
+
+// ── UTILS ──
+const fmt=n=>{const a=Math.abs(n);if(a>=10000000)return(n<0?'-':'')+'₹'+(a/10000000).toFixed(2)+'Cr';if(a>=100000)return(n<0?'-':'')+'₹'+(a/100000).toFixed(2)+'L';return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);};
+const fmtS=n=>{const a=Math.abs(n);if(a>=100000)return(n<0?'-':'')+'₹'+(a/100000).toFixed(1)+'L';if(a>=1000)return(n<0?'-':'')+'₹'+(a/1000).toFixed(0)+'K';return fmt(n);};
+const today=()=>new Date().toISOString().split('T')[0];
+const mk=d=>{const dt=new Date(d);return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;};
+const mlabel=ym=>{const[y,m]=ym.split('-');return new Date(y,m-1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});};
+const fmtD=iso=>new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+const daysLeft=day=>{const n=new Date(),d=new Date(n.getFullYear(),n.getMonth(),day);if(d<n)d.setMonth(d.getMonth()+1);return Math.ceil((d-n)/86400000);};
+const load=k=>JSON.parse(localStorage.getItem(k)||'null');
+const store=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+// ── TOAST ──
+function Toast({msg,done}){useEffect(()=>{const t=setTimeout(done,2400);return()=>clearTimeout(t);},[]);return <div className="toast-wrap"><div className="toast">{msg}</div></div>;}
+
+// ── MODAL WRAPPER ──
+function Modal({title,sub,emoji,onClose,children}){
+  return <div className="moverlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div className="mbox">
+      <div className="mhandle"/>
+      {emoji&&<div style={{fontSize:30,marginBottom:8}}>{emoji}</div>}
+      {title&&<div className="mtitle">{title}</div>}
+      {sub&&<div className="msub">{sub}</div>}
+      {children}
+    </div>
+  </div>;
+}
+
+// ── TXN ITEM ──
+function TxnItem({t,onEdit,onDel}){
+  const [open,setOpen]=useState(false);
+  const c=CM[t.category]||{i:'📦',c:'#7080a0'};
+  const sign=t.type==='income'?'+':t.type==='transfer'?'⇄':'-';
+  const col=t.type==='income'?'var(--green)':t.type==='transfer'?'var(--purple)':'var(--red)';
+  return <div className="txi" onClick={()=>setOpen(!open)}>
+    <div className="txic" style={{background:`${c.c}18`}}>{c.i}</div>
+    <div className="txin">
+      <div className="txcat">{t.category}{t.recurring&&<span className="rchip">↺{t.recurring}</span>}</div>
+      <div className="txmeta">{t.note&&`${t.note} · `}{fmtD(t.date)}{(t.tags||[]).map(g=><span className="tchip" key={g}>{g}</span>)}</div>
+    </div>
+    <div className="txr">
+      <div className="txamt" style={{color:col}}>{sign}{fmt(t.amount)}</div>
+      {open&&<div className="txbtns">
+        <button className="tb tbe" onClick={e=>{e.stopPropagation();onEdit(t.id);}}>✎</button>
+        <button className="tb tbd" onClick={e=>{e.stopPropagation();onDel(t.id);}}>✕</button>
+      </div>}
+    </div>
+  </div>;
+}
+
+// ── DONUT CHART ──
+function Donut({txns}){
+  const ref=useRef();
+  const data=useMemo(()=>{const r={};txns.filter(t=>t.type==='expense').forEach(t=>r[t.category]=(r[t.category]||0)+t.amount);return Object.entries(r).sort((a,b)=>b[1]-a[1]);},[txns]);
+  const total=data.reduce((s,[,v])=>s+v,0);
+  useEffect(()=>{
+    const cv=ref.current;if(!cv)return;
+    const ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,S=130;
+    cv.width=S*dpr;cv.height=S*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,S,S);
+    if(!total){ctx.beginPath();ctx.arc(65,65,48,0,Math.PI*2);ctx.strokeStyle='#1e1e38';ctx.lineWidth=14;ctx.stroke();return;}
+    let ang=-Math.PI/2;
+    data.forEach(([cat,val])=>{const c=CM[cat]||{c:'#7080a0'};const sl=(val/total)*Math.PI*2;ctx.beginPath();ctx.arc(65,65,48,ang,ang+sl);ctx.strokeStyle=c.c;ctx.lineWidth=14;ctx.lineCap='round';ctx.stroke();ang+=sl+0.04;});
+    ctx.fillStyle='#f0eadc';ctx.font='bold 13px Plus Jakarta Sans';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(fmtS(total),65,65);
+  },[data,total]);
+  return <div style={{display:'flex',alignItems:'center',gap:14}}>
+    <canvas ref={ref} style={{width:130,height:130,flexShrink:0}}/>
+    <div style={{flex:1}}>
+      {data.slice(0,6).map(([cat,val])=>{const c=CM[cat]||{c:'#7080a0'};return <div key={cat} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+        <div style={{width:9,height:9,borderRadius:'50%',background:c.c,flexShrink:0}}/>
+        <div style={{flex:1,fontSize:12,fontWeight:700}}>{cat}</div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:10,fontFamily:'JetBrains Mono',color:'var(--t2)'}}>{Math.round(val/total*100)}%</div>
+          <div style={{fontSize:10,fontFamily:'JetBrains Mono',color:'var(--t3)'}}>{fmt(val)}</div>
+        </div>
+      </div>;})}
+    </div>
+  </div>;
+}
+
+// ── DAY CHART ──
+function DayChart({txns}){
+  const ref=useRef();
+  useEffect(()=>{
+    const cv=ref.current;if(!cv)return;
+    const ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,W=cv.offsetWidth||340,H=100;
+    cv.width=W*dpr;cv.height=H*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+    const days=['S','M','T','W','T','F','S'],vals=[0,0,0,0,0,0,0];
+    txns.filter(t=>t.type==='expense').forEach(t=>vals[new Date(t.date).getDay()]+=t.amount);
+    const max=Math.max(...vals,1),bw=(W-32)/7,tod=new Date().getDay();
+    days.forEach((d,i)=>{
+      const x=16+i*bw,bh=Math.max(vals[i]/max*62,2),y=H-22-bh,it=i===tod;
+      ctx.fillStyle=it?'#f5c842':'#282848';
+      ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x+bw*.1,y,bw*.8,bh,3);else ctx.rect(x+bw*.1,y,bw*.8,bh);ctx.fill();
+      ctx.fillStyle=it?'var(--text)':'#505070';ctx.font='10px Plus Jakarta Sans';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(d,x+bw/2,H-16);
+      if(vals[i]>0){ctx.fillStyle=it?'#f5c842':'#505070';ctx.font='9px JetBrains Mono';ctx.textBaseline='bottom';ctx.fillText(vals[i]>=1000?Math.round(vals[i]/1000)+'k':Math.round(vals[i]),x+bw/2,y-2);}
+    });
+  },[txns]);
+  return <canvas ref={ref} style={{width:'100%',height:100}}/>;
+}
+
+// ── TREND CHART ──
+function TrendChart({txns}){
+  const ref=useRef();
+  useEffect(()=>{
+    const cv=ref.current;if(!cv)return;
+    const ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,W=cv.offsetWidth||340,H=120;
+    cv.width=W*dpr;cv.height=H*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+    const months=[];
+    for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);const ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const mt=txns.filter(t=>mk(t.date)===ym);months.push({inc:mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),lbl:d.toLocaleDateString('en-IN',{month:'short'})});}
+    const maxV=Math.max(...months.map(m=>Math.max(m.inc,m.exp)),1),pad=20,gW=W-pad*2,gH=H-32;
+    [['inc','#3ecf8e'],['exp','#ff6b6b']].forEach(([k,col])=>{
+      const pts=months.map((m,i)=>({x:pad+i*(gW/5),y:pad+(1-m[k]/maxV)*(gH-pad)}));
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach((p,i)=>{if(i>0){const pv=pts[i-1];ctx.bezierCurveTo((pv.x+p.x)/2,pv.y,(pv.x+p.x)/2,p.y,p.x,p.y);}});
+      ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
+      pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();});
+    });
+    months.forEach((m,i)=>{const x=pad+i*(gW/5);ctx.fillStyle='#505070';ctx.font='9px JetBrains Mono';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(m.lbl,x,H-14);});
+  },[txns]);
+  return <canvas ref={ref} style={{width:'100%',height:120}}/>;
+}
+
+// ── ADD / EDIT SCREEN ──
+function AddScreen({init,onSave,onClose,toast}){
+  const [type,setType]=useState(init?.txn?.type||init?.type||'expense');
+  const [cat,setCat]=useState(init?.txn?.category||init?.cat||(CATS.expense[0].n));
+  const [amt,setAmt]=useState(init?.txn?.amount||'');
+  const [note,setNote]=useState(init?.txn?.note||'');
+  const [tags,setTags]=useState((init?.txn?.tags||[]).join(', '));
+  const [date,setDate]=useState(init?.txn?.date||today());
+  const [rec,setRec]=useState(init?.txn?.recurring||'');
+  const ref=useRef();
+  useEffect(()=>{setTimeout(()=>ref.current?.focus(),350);},[]);
+  useEffect(()=>{const cats=CATS[type]||CATS.expense;if(!cats.find(c=>c.n===cat))setCat(cats[0].n);},[type]);
+  const save=()=>{
+    const a=parseFloat(amt);if(!a||a<=0){toast('⚠️ Enter a valid amount');return;}
+    onSave({type,category:cat,amount:a,note:note.trim(),tags:tags.split(',').map(t=>t.trim()).filter(Boolean),date:date||today(),recurring:rec});
+  };
+  const cats=CATS[type]||CATS.expense;
+  const tc=type==='income'?'var(--green)':type==='transfer'?'var(--purple)':'var(--red)';
+  const tgBg=type==='income'?'linear-gradient(135deg,#3ecf8e,#80eabb)':type==='transfer'?'linear-gradient(135deg,#9f7aea,#c4b0f5)':'linear-gradient(135deg,#f5c842,#ffe998)';
+  return <div className="addpage">
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'calc(16px + var(--safe-t)) 16px 14px',background:'var(--s1)',borderBottom:'1px solid var(--b1)',flexShrink:0}}>
+      <button onClick={onClose} style={{width:38,height:38,borderRadius:12,background:'var(--s2)',border:'1px solid var(--b2)',color:'var(--t2)',fontSize:20,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>←</button>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontFamily:'JetBrains Mono',fontSize:9,letterSpacing:3,color:tc,textTransform:'uppercase',marginBottom:2}}>{init?.txn?'Edit Entry':'New Entry'}</div>
+        <div style={{fontSize:17,fontWeight:800}}>{init?.txn?'Update':'Add'} Transaction</div>
+      </div>
+      <button onClick={save} style={{padding:'9px 16px',borderRadius:12,border:'none',background:tgBg,color:'#0a0a14',fontSize:13,fontWeight:800,cursor:'pointer',flexShrink:0}}>{init?.txn?'Update':'Save'}</button>
+    </div>
+    <div className="addinner">
+      <div style={{display:'flex',gap:8,margin:'16px 0'}}>
+        {[['expense','💸','Expense'],['income','💰','Income'],['transfer','🔄','Transfer']].map(([t,ic,lb])=>(
+          <button key={t} onClick={()=>setType(t)} style={{flex:1,padding:'13px 4px',borderRadius:15,border:'1.5px solid '+(type===t?(t==='income'?'rgba(62,207,142,.5)':t==='transfer'?'rgba(159,122,234,.5)':'rgba(255,107,107,.5)'):'var(--b1)'),background:type===t?(t==='income'?'rgba(62,207,142,.12)':t==='transfer'?'rgba(159,122,234,.12)':'rgba(255,107,107,.12)'):'var(--s2)',display:'flex',flexDirection:'column',alignItems:'center',gap:5,fontSize:13,fontWeight:700,color:type===t?(t==='income'?'var(--green)':t==='transfer'?'var(--purple)':'var(--red)'):'var(--t3)',cursor:'pointer'}}>
+            <span style={{fontSize:22}}>{ic}</span>{lb}
+          </button>
+        ))}
+      </div>
+      <div style={{background:'var(--s2)',border:'1.5px solid '+tc+'40',borderRadius:18,padding:'18px 20px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:26,fontWeight:800,color:tc,flexShrink:0}}>₹</span>
+        <input ref={ref} type="number" placeholder="0" inputMode="decimal" value={amt} onChange={e=>setAmt(e.target.value)}
+          style={{flex:1,background:'none',border:'none',color:'var(--text)',fontSize:36,fontWeight:800,letterSpacing:-1,outline:'none',width:'100%'}}/>
+      </div>
+      <div className="qrow">{QAMTS.map(a=><button key={a} className="qamt" onClick={()=>setAmt(String(a))}>₹{a>=1000?a/1000+'K':a}</button>)}</div>
+      <div className="flbl" style={{marginTop:4}}>Category</div>
+      <div className="chips">{cats.map(c=><button key={c.n} className={'chip'+(c.n===cat?' on':'')} onClick={()=>setCat(c.n)}>{c.i} {c.n}</button>)}</div>
+      <div className="flbl">Note <span style={{color:'var(--t3)',fontSize:9}}>(optional)</span></div>
+      <input className="fin" type="text" placeholder="What's this for?" value={note} onChange={e=>setNote(e.target.value)}/>
+      <div className="flbl">Tags <span style={{color:'var(--t3)',fontSize:9}}>(comma separated)</span></div>
+      <input className="fin" type="text" placeholder="e.g. work, personal" value={tags} onChange={e=>setTags(e.target.value)}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
+        <div><div className="flbl">Date</div><input className="fin" type="date" value={date} onChange={e=>setDate(e.target.value)} style={{marginBottom:0,fontSize:12}}/></div>
+        <div><div className="flbl">Recurring</div>
+          <select className="fin" value={rec} onChange={e=>setRec(e.target.value)} style={{marginBottom:0,fontSize:12,background:'var(--s2)'}}>
+            <option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option>
+          </select>
+        </div>
+      </div>
+      <button className="sbtn" onClick={save} style={{background:tgBg}}>{init?.txn?'Update':'Save'} Transaction ✦</button>
+      {init?.txn&&<button className="cbtn" onClick={onClose}>Cancel Edit</button>}
+    </div>
+  </div>;
+}
+
+// ── BUDGET MODAL ──
+function BudgetModal({budgets,txns,viewMonth,onSave,onClose}){
+  const [vals,setVals]=useState({...budgets});
+  const mt=txns.filter(t=>mk(t.date)===viewMonth);
+  return <Modal title="Monthly Budgets" sub="Set spending limits per category" emoji="🎯" onClose={onClose}>
+    {CATS.expense.map(c=>{
+      const spent=mt.filter(t=>t.type==='expense'&&t.category===c.n).reduce((s,t)=>s+t.amount,0);
+      return <div key={c.n} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+        <span style={{fontSize:20,flexShrink:0}}>{c.i}</span>
+        <span style={{flex:1,fontSize:13,fontWeight:700}}>{c.n}</span>
+        <span style={{fontSize:10,color:'var(--t3)',fontFamily:'JetBrains Mono',flexShrink:0}}>{fmt(spent)}</span>
+        <span style={{color:'var(--gold)',fontWeight:800}}>₹</span>
+        <input type="number" value={vals[c.n]||''} placeholder="0" onChange={e=>setVals(v=>({...v,[c.n]:parseInt(e.target.value)||0}))}
+          style={{width:86,padding:'9px 10px',background:'var(--s2)',border:'1.5px solid var(--b2)',borderRadius:10,color:'var(--text)',fontSize:13,fontWeight:700,textAlign:'right',outline:'none'}}/>
+      </div>;
+    })}
+    <div style={{height:8}}/>
+    <button className="gbtn" onClick={()=>{const b={};Object.entries(vals).forEach(([k,v])=>{if(v>0)b[k]=v;});onSave(b);}}>Save Budgets</button>
+    <button className="cbtn" onClick={onClose}>Cancel</button>
+  </Modal>;
+}
+
+// ── NAV BAR ──
+function NavBar({tab,setTab,onAdd}){
+  const ts=[['home','🏠','Home'],['analytics','📊','Stats'],null,['planning','🎯','Plan'],['settings','⚙️','Settings']];
+  return <div className="bnav">
+    {ts.map((t,i)=>t?<button key={t[0]} className={`nt${tab===t[0]?' on':''}`} onClick={()=>setTab(t[0])}><span className="ni">{t[1]}</span>{t[2]}</button>:<button key="add" className="nc" onClick={onAdd}>＋</button>)}
+  </div>;
+}
+
+// ── HOME TAB ──
+function HomeTab({txns,budgets,bills,vm,onAdd,onEdit,onDel,onBudget}){
+  const mt=useMemo(()=>txns.filter(t=>mk(t.date)===vm),[txns,vm]);
+  const carry=useMemo(()=>txns.filter(t=>mk(t.date)<vm).reduce((s,t)=>s+(t.type==='income'?t.amount:t.type==='expense'?-t.amount:0),0),[txns,vm]);
+  const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const hasBud=Object.keys(budgets).length>0;
+  const ub=useMemo(()=>bills.filter(b=>daysLeft(b.day)<=7).sort((a,b)=>daysLeft(a.day)-daysLeft(b.day)),[bills]);
+  return <div className="scroll" id="hs">
+    {ub.length>0&&<div className="card" style={{borderColor:'rgba(246,153,63,.3)'}}>
+      <div className="ctop"><span className="clabel">⚠️ Bills Due Soon</span></div>
+      {ub.slice(0,3).map(b=>{const dl=daysLeft(b.day),c=CM[b.cat||'Bills']||CM['Bills'];
+        return <div key={b.id} style={{display:'flex',alignItems:'center',gap:11,padding:'10px 0',borderBottom:'1px solid var(--b1)'}}>
+          <div style={{width:38,height:38,borderRadius:12,background:`${c.c}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{b.icon||'📅'}</div>
+          <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>{b.name}</div><div style={{fontSize:11,fontFamily:'JetBrains Mono',marginTop:1,color:dl===0?'var(--red)':dl<=2?'var(--orange)':'var(--t3)'}}>{dl===0?'Due today!':dl===1?'Due tomorrow':`Due in ${dl} days`}</div></div>
+          <div style={{fontSize:14,fontWeight:800,color:'var(--red)',flexShrink:0}}>{fmt(b.amount)}</div>
+        </div>;
+      })}
+    </div>}
+        <div className="card">
+      <div className="ctop"><span className="clabel">Quick Add</span></div>
+      <div className="qagrid">{QUICK.map(q=>{const c=CM[q.c];return <button key={q.c} className={`qabt ${q.t==='income'?'inc':'exp'}`} onClick={()=>onAdd({type:q.t,cat:q.c})}><span style={{fontSize:20}}>{c.i}</span>{q.c}</button>; })}</div>
+    </div>
+    {hasBud&&<div className="card">
+      <div className="ctop"><span className="clabel">Budget</span><button className="clink" onClick={onBudget}>Edit</button></div>
+      {Object.entries(budgets).map(([cat,bud])=>{const spent=mt.filter(t=>t.type==='expense'&&t.category===cat).reduce((s,t)=>s+t.amount,0);const pct=Math.min(spent/bud*100,100);const cls=pct>=100?'bover':pct>=80?'bwarn':'bok';const c=CM[cat]||{i:'📦'};
+        return <div className="bbar" key={cat}><div className="bbrow"><span className="bblbl">{c.i} {cat}</span><span className="bbval" style={{color:pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--t2)'}}>{fmt(spent)}/{fmt(bud)}</span></div><div className="btrack"><div className={`bfill ${cls}`} style={{width:`${pct.toFixed(1)}%`}}/></div></div>;
+      })}
+    </div>}
+    <div className="card">
+      <div className="ctop"><span className="clabel">Recent</span></div>
+      {mt.length===0?<div className="empty"><div className="emje">✦</div><div className="empt">No transactions this month.<br/>Tap + to add one.</div></div>:mt.slice(0,7).map(t=><TxnItem key={t.id} t={t} onEdit={onEdit} onDel={onDel}/>)}
+    </div>
+  </div>;
+}
+
+// ── ANALYTICS TAB ──
+function AnalyticsTab({txns,vm}){
+  const mt=useMemo(()=>txns.filter(t=>mk(t.date)===vm),[txns,vm]);
+  const carry=useMemo(()=>txns.filter(t=>mk(t.date)<vm).reduce((s,t)=>s+(t.type==='income'?t.amount:t.type==='expense'?-t.amount:0),0),[txns,vm]);
+  const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const sav=inc>0?Math.round((inc-exp)/inc*100):0;
+  const days=new Date(parseInt(vm.split('-')[0]),parseInt(vm.split('-')[1]),0).getDate();
+  const avgDay=exp>0?Math.round(exp/days):0;
+  const top=Object.entries(mt.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a;},{})).sort((a,b)=>b[1]-a[1])[0];
+  const mBars=useMemo(()=>{const r=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);const ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const mt2=txns.filter(t=>mk(t.date)===ym);r.push({inc:mt2.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mt2.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),lbl:d.toLocaleDateString('en-IN',{month:'short'})});}return r;},[txns]);
+  const maxV=Math.max(...mBars.map(m=>Math.max(m.inc,m.exp)),1);
+  const catbd=useMemo(()=>{const c={};mt.filter(t=>t.type==='expense').forEach(t=>c[t.category]=(c[t.category]||0)+t.amount);const tot=Object.values(c).reduce((s,v)=>s+v,0)||1;return Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>({cat,amt,pct:(amt/tot*100).toFixed(1)}));},[mt]);
+  return <div className="scroll">
+    <div className="igrid">
+      <div className="ins"><div className="insl">Total Spent</div><div className="insv" style={{color:'var(--red)'}}>{fmtS(exp)}</div><div className="inss">This month</div></div>
+      <div className="ins"><div className="insl">Savings Rate</div><div className="insv" style={{color:sav>=20?'var(--green)':sav>=10?'var(--orange)':'var(--red)'}}>{sav}%</div><div className="inss">{sav>=20?'🔥 Great':sav>=10?'👍 Good':'😬 Low'}</div></div>
+      <div className="ins"><div className="insl">Daily Avg</div><div className="insv">{fmtS(avgDay)}</div><div className="inss">Per day</div></div>
+      <div className="ins"><div className="insl">Carryover</div><div className="insv" style={{color:carry>=0?'var(--green)':'var(--red)',fontSize:15}}>{fmt(carry)}</div><div className="inss">From before</div></div>
+      <div className="ins"><div className="insl">Top Category</div><div className="insv" style={{fontSize:14}}>{top?top[0]:'—'}</div><div className="inss">{top?fmt(top[1]):''}</div></div>
+      <div className="ins"><div className="insl">Net Month</div><div className="insv" style={{color:inc-exp>=0?'var(--green)':'var(--red)',fontSize:15}}>{fmt(inc-exp)}</div><div className="inss">Inc − Exp</div></div>
+    </div>
+    <div className="card"><div className="ctop"><span className="clabel">Spending by Category</span></div><Donut txns={mt}/></div>
+    <div className="card"><div className="ctop"><span className="clabel">6-Month Overview</span></div>
+      {mBars.map((m,i)=><div className="cbrow" key={i}><div className="cblbl">{m.lbl}</div><div className="cbtrack"><div className="cbi" style={{width:`${(m.inc/maxV*100).toFixed(1)}%`}}/><div className="cbe" style={{width:`${(m.exp/maxV*100).toFixed(1)}%`}}/></div><div className="cbval">{fmtS(m.exp)}</div></div>)}
+      <div style={{display:'flex',gap:14,marginTop:8}}>
+        <div style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:'var(--t3)'}}><div style={{width:8,height:8,borderRadius:2,background:'var(--green)'}}/> Income</div>
+        <div style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:'var(--t3)'}}><div style={{width:8,height:8,borderRadius:2,background:'var(--red)'}}/> Expense</div>
+      </div>
+    </div>
+    <div className="card"><div className="ctop"><span className="clabel">Income vs Expense Trend</span></div><TrendChart txns={txns}/></div>
+    <div className="card"><div className="ctop"><span className="clabel">Spending by Day of Week</span></div><DayChart txns={txns}/></div>
+    <div className="card"><div className="ctop"><span className="clabel">Category Breakdown</span></div>
+      {catbd.length===0?<div className="empty" style={{padding:'12px 0'}}><div className="empt">No expenses this month.</div></div>:catbd.map(({cat,amt,pct})=>{const c=CM[cat]||{i:'📦',c:'#7080a0'};return <div className="bbar" key={cat}><div className="bbrow"><span className="bblbl">{c.i} {cat}</span><span className="bbval">{fmt(amt)} ({pct}%)</span></div><div className="btrack"><div className="bfill bok" style={{width:`${pct}%`,background:`${c.c}cc`}}/></div></div>;})}
+    </div>
+    <div className="card"><div className="ctop"><span className="clabel">Biggest Expenses</span></div>
+      {mt.filter(t=>t.type==='expense').sort((a,b)=>b.amount-a.amount).slice(0,5).map(t=><div key={t.id} className="txi" style={{cursor:'default'}}><div className="txic" style={{background:`${(CM[t.category]||{c:'#7080a0'}).c}18`}}>{(CM[t.category]||{i:'📦'}).i}</div><div className="txin"><div className="txcat">{t.category}</div><div className="txmeta">{t.note&&`${t.note} · `}{fmtD(t.date)}</div></div><div className="txamt" style={{color:'var(--red)'}}>-{fmt(t.amount)}</div></div>)}
+    </div>
+  </div>;
+}
+
+// ── CONFETTI ──
+function Confetti({onDone}){
+  const pieces=useMemo(()=>{
+    const colors=['#f5c842','#3ecf8e','#ff6b6b','#5b9cf6','#9f7aea','#f6993f','#38d9d9','#ff9ff3'];
+    return Array.from({length:80},(_,i)=>({
+      id:i,color:colors[i%colors.length],
+      left:Math.random()*100,delay:Math.random()*1.2,
+      dur:1.8+Math.random()*1.2,size:6+Math.random()*8,
+      shape:Math.random()>0.5?'circle':'square',
+    }));
+  },[]);
+  useEffect(()=>{const t=setTimeout(onDone,3500);return()=>clearTimeout(t);},[]);
+  return <div className="confetti-wrap">
+    {pieces.map(p=><div key={p.id} className="confetti-piece" style={{
+      left:`${p.left}%`,background:p.color,
+      width:p.size,height:p.size,borderRadius:p.shape==='circle'?'50%':3,
+      animationDuration:`${p.dur}s`,animationDelay:`${p.delay}s`,opacity:1,
+    }}/>)}
+    <div style={{position:'absolute',top:'35%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',animation:'pop2 .5s .3s cubic-bezier(.4,0,.2,1) both'}}>
+      <div style={{fontSize:56,marginBottom:8}}>🎉</div>
+      <div style={{fontSize:22,fontWeight:800,color:'var(--gold)',textShadow:'0 2px 20px rgba(245,200,66,.6)'}}>Goal Reached!</div>
+      <div style={{fontSize:14,color:'var(--text)',marginTop:6,opacity:.8}}>Amazing work! Keep it up 🔥</div>
+    </div>
+  </div>;
+}
+
+// ── DEBT TRACKER ──
+function DebtSection({debts,setDebts,txns,setTxns,toast}){
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({name:'',amount:'',type:'lent',note:'',date:''});
+  const totalLent=debts.filter(d=>d.type==='lent'&&!d.settled).reduce((s,d)=>s+d.amount,0);
+  const totalOwed=debts.filter(d=>d.type==='borrowed'&&!d.settled).reduce((s,d)=>s+d.amount,0);
+
+  // When adding a new debt, auto-log a transaction:
+  // Lent money → expense (money left your pocket)
+  // Borrowed money → income (money came to you)
+  const saveDebt=()=>{
+    if(!form.name||!form.amount){toast('⚠️ Name & amount required');return;}
+    const amt=parseFloat(form.amount);
+    const date=form.date||today();
+    const isEdit=!!modal?.id;
+
+    if(isEdit){
+      // On edit: remove old linked txn and add new one
+      const old=debts.find(x=>x.id===modal.id);
+      if(old?.txnId) setTxns(p=>p.filter(t=>t.id!==old.txnId));
+      const newTxnId=Date.now();
+      const txn={
+        id:newTxnId,
+        type:form.type==='lent'?'expense':'income',
+        amount:amt,
+        category:form.type==='lent'?'Other':'Other',
+        note:`${form.type==='lent'?'Lent to':'Borrowed from'} ${form.name}${form.note?' — '+form.note:''}`,
+        tags:['debt'],date,recurring:'',
+      };
+      setTxns(p=>[txn,...p.filter(t=>t.id!==old?.txnId)]);
+      setDebts(debts.map(x=>x.id===modal.id?{...x,name:form.name,amount:amt,type:form.type,note:form.note,date,txnId:newTxnId}:x));
+      toast('✅ Debt updated!');
+    } else {
+      const txnId=Date.now();
+      const txn={
+        id:txnId,
+        type:form.type==='lent'?'expense':'income',
+        amount:amt,
+        category:form.type==='lent'?'Other':'Other',
+        note:`${form.type==='lent'?'Lent to':'Borrowed from'} ${form.name}${form.note?' — '+form.note:''}`,
+        tags:['debt'],date,recurring:'',
+      };
+      setTxns(p=>[txn,...p]);
+      setDebts(prev=>[...prev,{id:txnId+1,name:form.name,amount:amt,type:form.type,note:form.note,date,settled:false,txnId}]);
+      toast(`✅ ${form.type==='lent'?'Lent':'Borrowed'} ${fmt(amt)} logged!`);
+    }
+    setModal(null);setForm({name:'',amount:'',type:'lent',note:'',date:''});
+  };
+
+  // Settle: reverse the original transaction on today's date
+  const settleDebt=d=>{
+    const settleTxnId=Date.now();
+    const txn={
+      id:settleTxnId,
+      type:d.type==='lent'?'income':'expense', // lent → you receive back → income; borrowed → you pay back → expense
+      amount:d.amount,
+      category:'Other',
+      note:`${d.type==='lent'?'Received back from':'Paid back to'} ${d.name}${d.note?' — '+d.note:''}`,
+      tags:['debt','settled'],date:today(),recurring:'',
+    };
+    setTxns(p=>[txn,...p]);
+    setDebts(debts.map(x=>x.id===d.id?{...x,settled:true,settleTxnId}:x));
+    toast(`✅ Settled! ${fmt(d.amount)} ${d.type==='lent'?'received back':'paid back'}`);
+  };
+
+  // Delete: remove debt and its linked transaction(s)
+  const deleteDebt=d=>{
+    const idsToRemove=new Set([d.txnId,d.settleTxnId].filter(Boolean));
+    setTxns(p=>p.filter(t=>!idsToRemove.has(t.id)));
+    setDebts(debts.filter(x=>x.id!==d.id));
+    toast('🗑️ Debt & linked transactions removed');
+  };
+
+  return <>
+    <div className="card">
+      <div className="ctop"><span className="clabel">Debt Tracker</span><button className="clink" onClick={()=>{setForm({name:'',amount:'',type:'lent',note:'',date:''});setModal({});}}>＋ Add</button></div>
+      <div style={{fontSize:11,color:'var(--t3)',fontFamily:'JetBrains Mono',marginBottom:12,lineHeight:1.5}}>
+        Automatically logs to your balance · Lent = expense · Borrowed = income · Settle = reversal
+      </div>
+      {(totalLent>0||totalOwed>0)&&<div style={{display:'flex',gap:8,marginBottom:14}}>
+        <div style={{flex:1,background:'rgba(62,207,142,.1)',border:'1px solid rgba(62,207,142,.2)',borderRadius:12,padding:'10px 12px'}}>
+          <div style={{fontFamily:'JetBrains Mono',fontSize:8,letterSpacing:2,color:'var(--t3)',textTransform:'uppercase',marginBottom:3}}>To Receive</div>
+          <div style={{fontSize:16,fontWeight:800,color:'var(--green)'}}>{fmt(totalLent)}</div>
+        </div>
+        <div style={{flex:1,background:'rgba(255,107,107,.1)',border:'1px solid rgba(255,107,107,.2)',borderRadius:12,padding:'10px 12px'}}>
+          <div style={{fontFamily:'JetBrains Mono',fontSize:8,letterSpacing:2,color:'var(--t3)',textTransform:'uppercase',marginBottom:3}}>To Pay Back</div>
+          <div style={{fontSize:16,fontWeight:800,color:'var(--red)'}}>{fmt(totalOwed)}</div>
+        </div>
+      </div>}
+      {debts.length===0
+        ?<div className="empty"><div className="emje">🤝</div><div className="empt">No debts tracked.<br/>Lending/borrowing will auto-update your balance.</div></div>
+        :[...debts].sort((a,b)=>a.settled-b.settled).map(d=>(
+          <div className="debtcard" key={d.id} style={{opacity:d.settled?0.55:1}}>
+            <div className="debticon" style={{background:d.type==='lent'?'rgba(62,207,142,.15)':'rgba(255,107,107,.15)'}}>{d.type==='lent'?'💸':'🤲'}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700,display:'flex',alignItems:'center',gap:6}}>
+                {d.name}
+                {d.settled&&<span style={{fontSize:9,padding:'2px 7px',borderRadius:50,background:'rgba(62,207,142,.15)',color:'var(--green)',fontFamily:'JetBrains Mono'}}>settled</span>}
+              </div>
+              <div style={{fontSize:11,color:'var(--t3)',fontFamily:'JetBrains Mono',marginTop:2}}>
+                {d.type==='lent'?'You lent':'You borrowed'}{d.note&&` · ${d.note}`} · {fmtD(d.date)}
+              </div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <div style={{fontSize:15,fontWeight:800,color:d.type==='lent'?'var(--green)':'var(--red)'}}>{fmt(d.amount)}</div>
+              <div style={{display:'flex',gap:3,marginTop:4,justifyContent:'flex-end'}}>
+                {!d.settled&&<button className="tb" style={{background:'rgba(62,207,142,.15)',color:'var(--green)',fontSize:10,width:'auto',padding:'0 8px',fontWeight:700}} onClick={()=>settleDebt(d)}>✓ Settle</button>}
+                {!d.settled&&<button className="tb tbe" onClick={()=>{setForm({name:d.name,amount:d.amount,type:d.type,note:d.note||'',date:d.date||''});setModal(d);}}>✎</button>}
+                <button className="tb tbd" onClick={()=>deleteDebt(d)}>✕</button>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    {modal&&<Modal title={modal.id?'Edit Debt':'New Debt'} sub={modal.id?'Updates balance automatically':'Auto-logs to your balance'} emoji="🤝" onClose={()=>setModal(null)}>
+      <div style={{display:'flex',gap:8,marginBottom:14}}>
+        {[['lent','💸','I Lent'],['borrowed','🤲','I Borrowed']].map(([t,ic,lb])=>(
+          <button key={t} onClick={()=>setForm(f=>({...f,type:t}))} style={{flex:1,padding:'13px 6px',borderRadius:14,border:`1.5px solid ${form.type===t?(t==='lent'?'rgba(62,207,142,.5)':'rgba(255,107,107,.5)'):'var(--b1)'}`,background:form.type===t?(t==='lent'?'rgba(62,207,142,.1)':'rgba(255,107,107,.1)'):'var(--s2)',display:'flex',flexDirection:'column',alignItems:'center',gap:4,fontSize:13,fontWeight:700,color:form.type===t?(t==='lent'?'var(--green)':'var(--red)'):'var(--t3)',cursor:'pointer'}}>
+            <span style={{fontSize:22}}>{ic}</span>{lb}
+          </button>
+        ))}
+      </div>
+      <div style={{padding:'10px 14px',borderRadius:12,marginBottom:14,fontSize:12,fontFamily:'JetBrains Mono',
+        background:form.type==='lent'?'rgba(255,107,107,.08)':'rgba(62,207,142,.08)',
+        color:form.type==='lent'?'var(--red)':'var(--green)',
+        border:`1px solid ${form.type==='lent'?'rgba(255,107,107,.2)':'rgba(62,207,142,.2)'}`}}>
+        {form.type==='lent'
+          ?'💸 Will be logged as an Expense (money left your pocket)'
+          :'💰 Will be logged as Income (money came to you)'}
+      </div>
+      <div className="flbl">Person's Name</div>
+      <input className="fin" type="text" placeholder="e.g. Rahul, Priya" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
+      <div className="flbl">Amount (₹)</div>
+      <input className="fin" type="number" placeholder="e.g. 2000" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))}/>
+      <div className="flbl">Note <span style={{color:'var(--t3)',fontSize:9}}>(optional)</span></div>
+      <input className="fin" type="text" placeholder="What was it for?" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/>
+      <div className="flbl">Date</div>
+      <input className="fin" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={{marginBottom:16}}/>
+      <button className="gbtn" onClick={saveDebt}>{modal.id?'Update':'Save & Log to Balance'}</button>
+      <button className="cbtn" onClick={()=>setModal(null)}>Cancel</button>
+    </Modal>}
+  </>;
+}
+
+// ── PLANNING TAB ──
+function PlanningTab({txns,setTxns,goals,bills,budgets,totalBudget,vm,setGoals,setBills,setTotalBudget,debts,setDebts,onConfetti,toast}){
+  const [gm,setGm]=useState(null);
+  const [bm,setBm]=useState(null);
+  const [bc,setBc]=useState('Bills');
+
+  const mt=txns.filter(t=>mk(t.date)===vm);
+  const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const sav=inc>0?Math.round((inc-exp)/inc*100):0;
+  const checks=[{ok:sav>=20,t:sav>=20?'Saving 20%+ of income ✓':`Savings rate ${sav}% (aim 20%)`},{ok:goals.length>0,t:goals.length>0?'Savings goals set ✓':'No savings goals'},{ok:bills.length>0,t:bills.length>0?'Bills tracked ✓':'No bill reminders set'},{ok:txns.length>=10,t:txns.length>=10?'Actively tracking ✓':'Track more transactions'},{ok:Object.keys(budgets).length>0,t:Object.keys(budgets).length>0?'Budget limits set ✓':'No category budgets'}];
+  const score=checks.filter(c=>c.ok).length*20;
+  const grade=score>=80?'A':score>=60?'B':score>=40?'C':'D';
+  const gc=score>=80?'var(--green)':score>=60?'var(--blue)':score>=40?'var(--orange)':'var(--red)';
+
+  const saveBill=d=>{if(!d.name||!d.amount||!d.day){toast('⚠️ All fields required');return;}const b={...d,cat:bc};bm?.id?setBills(bills.map(x=>x.id===bm.id?{...x,...b}:x)):setBills([...bills,{id:Date.now(),...b}]);setBm(null);toast('✅ Bill saved!');};
+  const saveGoal=d=>{if(!d.name||!d.target){toast('⚠️ Name & target required');return;}const wasComplete=gm?.id&&goals.find(g=>g.id===gm.id)?.saved>=goals.find(g=>g.id===gm.id)?.target;const nowComplete=d.saved>=d.target;gm?.id?setGoals(goals.map(g=>g.id===gm.id?{...g,...d}:g)):setGoals([...goals,{id:Date.now(),...d}]);setGm(null);if(nowComplete&&!wasComplete){toast('🎉 Goal reached!');setTimeout(onConfetti,200);}else{toast('✅ Goal saved!');}};
+
+  return <div className="scroll">
+    <div className="card">
+      <div className="ctop"><span className="clabel">Savings Goals</span><button className="clink" onClick={()=>setGm({})}>＋ Add</button></div>
+      {goals.length===0?<div className="empty"><div className="emje">🏆</div><div className="empt">Set a target to stay motivated!</div></div>:goals.map(g=>{const pct=Math.min(g.saved/g.target*100,100);const dl=g.date?Math.ceil((new Date(g.date)-new Date())/86400000):null;
+        return <div className="goalcard" key={g.id}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:44,height:44,borderRadius:14,background:'var(--b2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{g.icon||'🎯'}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{fontSize:14,fontWeight:700}}>{g.name}</div>
+                <div style={{display:'flex',gap:4}}>
+                  <button className="tb tbe" onClick={()=>setGm(g)}>✎</button>
+                  <button className="tb tbd" onClick={()=>{setGoals(goals.filter(x=>x.id!==g.id));toast('🗑️ Removed');}}>✕</button>
+                </div>
+              </div>
+              <div style={{fontSize:11,color:'var(--t3)',fontFamily:'JetBrains Mono',marginTop:2}}>{fmt(g.saved)} of {fmt(g.target)}{dl!=null?` · ${dl}d left`:''}</div>
+              <div className="gbar"><div className="gfill" style={{width:`${pct.toFixed(1)}%`}}/></div>
+            </div>
+            <div style={{fontSize:14,fontWeight:800,color:'var(--gold)',flexShrink:0}}>{Math.round(pct)}%</div>
+          </div>
+        </div>;
+      })}
+    </div>
+
+
+
+    <div className="card">
+      <div className="ctop"><span className="clabel">Monthly Budget Cap</span></div>
+      <div className="flbl">Overall spending limit (₹)</div>
+      <input className="fin" type="number" placeholder="e.g. 30000" defaultValue={totalBudget||''} onChange={e=>setTotalBudget(parseInt(e.target.value)||0)} style={{marginBottom:totalBudget?12:0}}/>
+      {totalBudget>0&&(()=>{const pct=Math.min(exp/totalBudget*100,100),cls=pct>=100?'bover':pct>=80?'bwarn':'bok';
+        return <><div className="bbrow"><span className="bblbl">{fmt(exp)} spent</span><span className="bbval" style={{color:pct>=100?'var(--red)':'var(--t2)'}}>{Math.round(pct)}% of {fmt(totalBudget)}</span></div><div className="btrack"><div className={`bfill ${cls}`} style={{width:`${pct.toFixed(1)}%`}}/></div></>;
+      })()}
+    </div>
+
+    <div className="card">
+      <div className="ctop"><span className="clabel">Financial Health Score</span></div>
+      <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
+        <div style={{width:64,height:64,borderRadius:18,background:`${gc}18`,border:`2px solid ${gc}40`,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <div style={{fontSize:26,fontWeight:800,color:gc,lineHeight:1}}>{grade}</div>
+          <div style={{fontSize:10,color:'var(--t3)',fontFamily:'JetBrains Mono'}}>{score}/100</div>
+        </div>
+        <div><div style={{fontSize:15,fontWeight:800}}>{score>=80?'Excellent!':score>=60?'Good job!':score>=40?'Needs work':'Take action'}</div><div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>{score>=80?'Keep up great habits.':score>=60?'A few tweaks will help.':'Focus on saving more.'}</div></div>
+      </div>
+      {checks.map((c,i)=><div className="hchk" key={i}><span style={{fontSize:14}}>{c.ok?'✅':'❌'}</span><span style={{color:c.ok?'var(--text)':'var(--t3)'}}>{c.t}</span></div>)}
+    </div>
+
+    <div className="card">
+      <div className="ctop"><span className="clabel">Bill Reminders</span><button className="clink" onClick={()=>{setBc('Bills');setBm({});}}>＋ Add</button></div>
+      {bills.length===0
+        ?<div className="empty"><div className="emje">📅</div><div className="empt">Add recurring bills so you never miss a payment!</div></div>
+        :bills.map(b=>{const dl=daysLeft(b.day),c=CM[b.cat||'Bills']||CM['Bills'];
+          return <div key={b.id} style={{display:'flex',alignItems:'center',gap:11,padding:'11px 0',borderBottom:'1px solid var(--b1)'}}>
+            <div style={{width:40,height:40,borderRadius:13,background:`${c.c}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:19,flexShrink:0}}>{b.icon||'📅'}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700}}>{b.name}</div>
+              <div style={{fontSize:11,fontFamily:'JetBrains Mono',marginTop:2,color:dl===0?'var(--red)':dl<=3?'var(--orange)':'var(--t3)'}}>Day {b.day} · {dl===0?'Due today!':dl===1?'Tomorrow':`In ${dl} days`}</div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <div style={{fontSize:14,fontWeight:800,color:'var(--red)'}}>{fmt(b.amount)}</div>
+              <div style={{display:'flex',gap:3,marginTop:4,justifyContent:'flex-end'}}>
+                <button className="tb tbe" onClick={()=>{setBc(b.cat||'Bills');setBm(b);}}>✎</button>
+                <button className="tb tbd" onClick={()=>{setBills(bills.filter(x=>x.id!==b.id));toast('🗑️ Removed');}}>✕</button>
+              </div>
+            </div>
+          </div>;
+        })
+      }
+      {bm!==null&&<BillModal bill={bm?.id?bm:null} cat={bc} onCat={setBc} onSave={saveBill} onClose={()=>setBm(null)}/>}
+    </div>
+    <DebtSection debts={debts} setDebts={setDebts} txns={txns} setTxns={setTxns} toast={toast}/>
+    {gm&&<GoalModal goal={gm.id?gm:null} onSave={saveGoal} onClose={()=>setGm(null)}/>}
+  </div>;
+}
+
+function GoalModal({goal,onSave,onClose}){
+  const [n,setN]=useState(goal?.name||'');const [t,setT]=useState(goal?.target||'');const [s,setS]=useState(goal?.saved||'');const [ico,setIco]=useState(goal?.icon||'🎯');const [d,setD]=useState(goal?.date||'');
+  return <Modal title={goal?'Edit Goal':'New Goal'} sub="Track your savings target" emoji="🏆" onClose={onClose}>
+    <div className="flbl">Goal Name</div><input className="fin" type="text" placeholder="e.g. iPhone, Vacation" value={n} onChange={e=>setN(e.target.value)}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><div className="flbl">Target (₹)</div><input className="fin" type="number" placeholder="50000" value={t} onChange={e=>setT(e.target.value)} style={{marginBottom:0}}/></div>
+      <div><div className="flbl">Saved (₹)</div><input className="fin" type="number" placeholder="0" value={s} onChange={e=>setS(e.target.value)} style={{marginBottom:0}}/></div>
+    </div>
+    <div style={{height:12}}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><div className="flbl">Icon</div><input className="fin" type="text" placeholder="🎯" value={ico} onChange={e=>setIco(e.target.value)} maxLength={2} style={{marginBottom:0}}/></div>
+      <div><div className="flbl">Target Date</div><input className="fin" type="date" value={d} onChange={e=>setD(e.target.value)} style={{marginBottom:0,fontSize:12}}/></div>
+    </div>
+    <div style={{height:14}}/>
+    <button className="gbtn" onClick={()=>onSave({name:n,target:parseFloat(t)||0,saved:parseFloat(s)||0,icon:ico||'🎯',date:d})}>Save Goal</button>
+    <button className="cbtn" onClick={onClose}>Cancel</button>
+  </Modal>;
+}
+
+function BillModal({bill,cat,onCat,onSave,onClose}){
+  const [n,setN]=useState(bill?.name||'');
+  const [a,setA]=useState(bill?.amount||'');
+  const [d,setD]=useState(bill?.day||'');
+  const [ico,setIco]=useState(bill?.icon||'📅');
+  return <Modal title={bill?'Edit Bill':'New Bill Reminder'} sub="Never miss a payment" emoji="📅" onClose={onClose}>
+    <div className="flbl">Bill Name</div>
+    <input className="fin" type="text" placeholder="e.g. Electricity, Netflix, Rent" value={n} onChange={e=>setN(e.target.value)}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><div className="flbl">Amount (₹)</div><input className="fin" type="number" placeholder="1500" value={a} onChange={e=>setA(e.target.value)} style={{marginBottom:0}}/></div>
+      <div><div className="flbl">Due Day (1-28)</div><input className="fin" type="number" placeholder="1" min={1} max={28} value={d} onChange={e=>setD(e.target.value)} style={{marginBottom:0}}/></div>
+    </div>
+    <div style={{height:12}}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><div className="flbl">Icon</div><input className="fin" type="text" placeholder="⚡" value={ico} onChange={e=>setIco(e.target.value)} maxLength={2} style={{marginBottom:0}}/></div>
+      <div><div className="flbl">Category</div>
+        <select className="fin" value={cat} onChange={e=>onCat(e.target.value)} style={{marginBottom:0,background:'var(--s2)',fontSize:13}}>
+          {CATS.expense.map(c=><option key={c.n} value={c.n}>{c.i} {c.n}</option>)}
+        </select>
+      </div>
+    </div>
+    <div style={{height:16}}/>
+    <button className="gbtn" onClick={()=>onSave({name:n,amount:parseFloat(a)||0,day:parseInt(d)||1,icon:ico||'📅'})}>Save Reminder</button>
+    <button className="cbtn" onClick={onClose}>Cancel</button>
+  </Modal>;
+}
+
+// ── HISTORY TAB ──
+function HistoryTab({txns,onEdit,onDel}){
+  const [filter,setFilter]=useState('all');
+  const [q,setQ]=useState('');
+  const filtered=useMemo(()=>{
+    let list=[...txns];
+    if(['income','expense','transfer'].includes(filter))list=list.filter(t=>t.type===filter);
+    else if(filter!=='all')list=list.filter(t=>t.category===filter);
+    if(q){const sq=q.toLowerCase();list=list.filter(t=>(t.note||'').toLowerCase().includes(sq)||t.category.toLowerCase().includes(sq)||(t.amount+'').includes(sq)||(t.tags||[]).join(' ').toLowerCase().includes(sq));}
+    return list;
+  },[txns,filter,q]);
+  const grouped=useMemo(()=>{const g={};filtered.forEach(t=>{const m=mk(t.date);if(!g[m])g[m]=[];g[m].push(t);});return Object.entries(g).sort((a,b)=>b[0].localeCompare(a[0]));},[filtered]);
+  const pills=['all','income','expense','Food','Transport','Shopping','Bills','Entertainment','Health','Education','Groceries'];
+  return <div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
+    <div style={{padding:'0 14px 8px',flexShrink:0}}>
+      <div className="swrap"><span className="sicon">🔍</span><input className="sin" type="text" placeholder="Search by name, amount, category..." value={q} onChange={e=>setQ(e.target.value)}/></div>
+      <div className="pills">{pills.map(p=><button key={p} className={`pill${filter===p?' on':''}`} onClick={()=>setFilter(p)}>{p==='all'?'All':p==='income'?'💰 Income':p==='expense'?'💸 Expense':`${CM[p]?.i||''} ${p}`}</button>)}</div>
+    </div>
+    <div className="scroll" style={{paddingTop:0}}>
+      {grouped.length===0?<div className="empty"><div className="emje">🔍</div><div className="empt">No transactions found.</div></div>:grouped.map(([m,ts])=>{
+        const ci=ts.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+        const ce=ts.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+        const carry=txns.filter(t=>mk(t.date)<m).reduce((s,t)=>s+(t.type==='income'?t.amount:t.type==='expense'?-t.amount:0),0);
+        return <div key={m}><div className="divlbl">{mlabel(m)} <span style={{color:'var(--green)'}}>+{fmtS(ci)}</span> <span style={{color:'var(--red)'}}>−{fmtS(ce)}</span> <span style={{color:'var(--t3)',fontSize:9}}>carry {fmt(carry)}</span></div><div className="card" style={{padding:'8px 14px'}}>{ts.map(t=><TxnItem key={t.id} t={t} onEdit={onEdit} onDel={onDel}/>)}</div></div>;
+      })}
+    </div>
+  </div>;
+}
+
+// ── SETTINGS TAB ──
+function SettingsTab({txns,budgets,name,setName,onBudget,onCSV,onReport,onClear}){
+  const [clr,setClr]=useState(false);
+  return <div className="scroll">
+    <div className="card">
+      <div className="ctop"><span className="clabel">Profile</span></div>
+      <div className="flbl">Your Name</div>
+      <input className="fin" type="text" placeholder="Your name..." defaultValue={name} onChange={e=>setName(e.target.value)} style={{marginBottom:0}}/>
+    </div>
+    <div className="card">
+      <div className="ctop"><span className="clabel">Budgets</span></div>
+      <div className="srow" style={{borderBottom:'none'}}>
+        <div className="sico" style={{background:'rgba(245,200,66,.1)'}}>🎯</div>
+        <div className="sinfo"><div className="stit">Category Budgets</div><div className="ssub">Set monthly limits per category</div></div>
+        <button className="sact" onClick={onBudget}>Edit</button>
+      </div>
+    </div>
+    <div className="card">
+      <div className="ctop"><span className="clabel">Data</span></div>
+      <div className="srow"><div className="sico" style={{background:'rgba(62,207,142,.1)'}}>📤</div><div className="sinfo"><div className="stit">Export CSV</div><div className="ssub">All transactions as spreadsheet</div></div><button className="sact" onClick={onCSV}>Export</button></div>
+      <div className="srow"><div className="sico" style={{background:'rgba(91,156,246,.1)'}}>📊</div><div className="sinfo"><div className="stit">Monthly Report</div><div className="ssub">Summary as text file</div></div><button className="sact" onClick={onReport}>Report</button></div>
+      <div className="srow" style={{borderBottom:'none'}}><div className="sico" style={{background:'rgba(255,107,107,.1)'}}>🗑️</div><div className="sinfo"><div className="stit">Clear All Data</div><div className="ssub">Delete everything permanently</div></div><button className="sact" style={{color:'var(--red)',borderColor:'rgba(255,107,107,.3)'}} onClick={()=>setClr(true)}>Clear</button></div>
+    </div>
+
+    <div className="card" style={{textAlign:'center',padding:'20px 16px'}}>
+      <div style={{fontSize:42,marginBottom:8}}>₹</div>
+      <div style={{fontSize:18,fontWeight:800}}>SpendSense</div>
+      <div style={{fontSize:11,color:'var(--t3)',fontFamily:'JetBrains Mono',marginTop:4}}>v4.0 · Smart Money Tracker</div>
+      <div style={{display:'flex',justifyContent:'center',gap:24,marginTop:16}}>
+        {[['Entries',txns.length],['Months',new Set(txns.map(t=>mk(t.date))).size],['Categories',new Set(txns.map(t=>t.category)).size]].map(([l,v])=>(
+          <div key={l} style={{textAlign:'center'}}><div style={{fontSize:20,fontWeight:800}}>{v}</div><div style={{fontSize:10,color:'var(--t3)',fontFamily:'JetBrains Mono',letterSpacing:2,textTransform:'uppercase'}}>{l}</div></div>
+        ))}
+      </div>
+    </div>
+    
+    {clr&&<Modal title="Clear all data?" sub="All transactions, goals and budgets will be deleted forever." emoji="⚠️" onClose={()=>setClr(false)}>
+      <div style={{display:'flex',gap:8}}>
+        <button style={{flex:1,padding:14,borderRadius:13,border:'1.5px solid var(--b2)',background:'none',color:'var(--text)',fontSize:14,fontWeight:700,cursor:'pointer'}} onClick={()=>setClr(false)}>Cancel</button>
+        <button style={{flex:1,padding:14,borderRadius:13,border:'1.5px solid rgba(255,107,107,.3)',background:'rgba(255,107,107,.1)',color:'var(--red)',fontSize:14,fontWeight:700,cursor:'pointer'}} onClick={()=>{onClear();setClr(false);}}>Delete All</button>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+// ── BALANCE CARD ──
+function BalCard({txns,vm}){
+  const carry=useMemo(()=>txns.filter(t=>mk(t.date)<vm).reduce((s,t)=>s+(t.type==='income'?t.amount:t.type==='expense'?-t.amount:0),0),[txns,vm]);
+  const mt=useMemo(()=>txns.filter(t=>mk(t.date)===vm),[txns,vm]);
+  const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal=carry+inc-exp;
+  const sav=inc>0?Math.round((inc-exp)/inc*100):0;
+  return <div className="balcard">
+    <div className="bal-eye">Total Balance</div>
+    <div className={`bal-num ${bal>0?'bp':bal<0?'bn':'bz'}`}>{fmt(bal)}</div>
+    {carry!==0&&<div className="bal-carry">Carried over: <span className="cpill" style={{color:carry>0?'var(--green)':'var(--red)'}}>{carry>0?'+':''}{fmt(carry)}</span><span style={{color:carry>0?'var(--green)':'var(--red)',fontSize:10}}>{carry>0?'surplus':'deficit'}</span></div>}
+    <div className="bstats">
+      <div className="bs"><div className="bsl">Income</div><div className="bsv" style={{color:'var(--green)'}}>{fmtS(inc)}</div></div>
+      <div className="bs"><div className="bsl">Spent</div><div className="bsv" style={{color:'var(--red)'}}>{fmtS(exp)}</div></div>
+      <div className="bs"><div className="bsl">Saved</div><div className="bsv" style={{color:'var(--blue)'}}>{sav}%</div></div>
+      <div className="bs"><div className="bsl">Txns</div><div className="bsv">{mt.length}</div></div>
+    </div>
+  </div>;
+}
+
+// ── ROOT APP ──
+function App(){
+  const [txns,setTxns]=useState(()=>load('p4_txns')||[]);
+  const [budgets,setBudgets]=useState(()=>load('p4_budgets')||{});
+  const [totalBudget,setTotalBudget]=useState(()=>load('p4_tb')||0);
+  const [goals,setGoals]=useState(()=>load('p4_goals')||[]);
+  const [name,setName]=useState(()=>load('p4_name')||'');
+  const [tab,setTab]=useState('home');
+  const [vm,setVm]=useState(()=>mk(today()));
+  const [addInit,setAddInit]=useState(null);
+  const [budModal,setBudModal]=useState(false);
+  const [delId,setDelId]=useState(null);
+  const [toast,setToast]=useState(null);
+  const [debts,setDebts]=useState(()=>load('p4_debts')||[]);
+  const [challenges,setChallenges]=useState(()=>load('p4_chals')||[]);
+  const [confetti,setConfetti]=useState(false);
+  const [bills,setBills]=useState(()=>load('p4_bills')||[]);
+
+  useEffect(()=>{store('p4_txns',txns);},[txns]);
+  useEffect(()=>{store('p4_budgets',budgets);},[budgets]);
+  useEffect(()=>{store('p4_tb',totalBudget);},[totalBudget]);
+  useEffect(()=>{store('p4_goals',goals);},[goals]);
+  useEffect(()=>{store('p4_name',name);},[name]);
+  useEffect(()=>{store('p4_debts',debts);},[debts]);
+  useEffect(()=>{store('p4_chals',challenges);},[challenges]);
+  useEffect(()=>{store('p4_bills',bills);},[bills]);
+
+  // Auto-add recurring transactions each month
+  useEffect(()=>{
+    if(!txns.length)return;
+    const thisMonth=mk(today());
+    const alreadyRun=load('p4_rec_run');
+    if(alreadyRun===thisMonth)return;
+    const lastMonthKey=(()=>{const[y,m]=thisMonth.split('-').map(Number);const d=new Date(y,m-2,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;})();
+    const recurring=txns.filter(t=>t.recurring==='monthly'&&mk(t.date)===lastMonthKey);
+    if(!recurring.length){store('p4_rec_run',thisMonth);return;}
+    const alreadyThisMonth=new Set(txns.filter(t=>mk(t.date)===thisMonth).map(t=>t.category+'_'+t.amount+'_'+t.note));
+    const toAdd=recurring.filter(t=>!alreadyThisMonth.has(t.category+'_'+t.amount+'_'+t.note));
+    if(toAdd.length){
+      const newTxns=toAdd.map(t=>({...t,id:Date.now()+Math.random(),date:today(),recurring:'monthly'}));
+      setTxns(p=>[...newTxns,...p]);
+      store('p4_rec_run',thisMonth);
+      setTimeout(()=>showToast(`🔄 ${toAdd.length} recurring transaction${toAdd.length>1?'s':''} auto-added!`),800);
+    } else {store('p4_rec_run',thisMonth);}
+  },[]);
+
+  // PWA
+  useEffect(()=>{
+    const manifest={name:'SpendSense — Smart Money Tracker',short_name:'SpendSense',start_url:'./',display:'standalone',background_color:'#0a0a14',theme_color:'#0a0a14',icons:[{src:`data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23f5c842'/><stop offset='1' stop-color='%23e8960a'/></linearGradient></defs><rect width='100' height='120' rx='22' fill='%230a0a14'/><circle cx='50' cy='48' r='36' fill='url(%23g)' opacity='0.12'/><text x='50' y='63' font-size='52' text-anchor='middle' font-weight='900' fill='%23f5c842' font-family='sans-serif'>&#8377;</text><text x='50' y='98' font-size='9.5' text-anchor='middle' font-weight='800' fill='%23f5c842' font-family='sans-serif' letter-spacing='1.5' opacity='0.9'>SpendSense</text></svg>`,sizes:'any',type:'image/svg+xml'}]};
+    const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    let el=document.getElementById('ml');if(!el){el=document.createElement('link');el.id='ml';el.rel='manifest';document.head.appendChild(el);}el.href=URL.createObjectURL(blob);
+    if('serviceWorker' in navigator){const sw=`const C='p4v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['.']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('.')))));`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}
+  },[]);
+
+  const showToast=useCallback(m=>setToast(m),[]);
+
+  const saveTxn=useCallback(data=>{
+    if(addInit?.txn){setTxns(p=>p.map(t=>t.id===addInit.txn.id?{...t,...data}:t));showToast('✅ Updated!');}
+    else{
+      setTxns(p=>[{id:Date.now(),...data},...p]);showToast('✅ Saved!');
+      if(data.type==='expense'&&budgets[data.category]){setTimeout(()=>{const spent=txns.filter(t=>mk(t.date)===mk(data.date)&&t.type==='expense'&&t.category===data.category).reduce((s,t)=>s+t.amount,0)+data.amount;const b=budgets[data.category];if(spent>=b)showToast(`🚨 ${data.category} budget exceeded!`);else if(spent>=b*0.8)showToast(`⚠️ ${data.category} at ${Math.round(spent/b*100)}%`);},500);}
+    }
+    setAddInit(null);
+  },[addInit,txns,budgets,showToast]);
+
+  const chMonth=d=>{const[y,m]=vm.split('-').map(Number);const dt=new Date(y,m-1+d,1);setVm(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`);};
+
+  const exportCSV=()=>{if(!txns.length){showToast('⚠️ No data');return;}const rows=[['Date','Type','Category','Amount','Note','Tags','Recurring']];txns.forEach(t=>rows.push([t.date,t.type,t.category,t.amount,t.note||'',(t.tags||[]).join(';'),t.recurring||'']));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n')],{type:'text/csv'}));a.download=`spendsense_${today()}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('📤 Exported!');};
+
+  const exportReport=()=>{const mt=txns.filter(t=>mk(t.date)===vm);const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);const carry=txns.filter(t=>mk(t.date)<vm).reduce((s,t)=>s+(t.type==='income'?t.amount:t.type==='expense'?-t.amount:0),0);const cats={};mt.filter(t=>t.type==='expense').forEach(t=>cats[t.category]=(cats[t.category]||0)+t.amount);let txt=`SPENDSENSE MONTHLY REPORT\n${mlabel(vm)}\n${'─'.repeat(30)}\n\nOpening Balance: ${fmt(carry)}\nIncome: ${fmt(inc)}\nExpenses: ${fmt(exp)}\nNet Savings: ${fmt(inc-exp)}\nSavings Rate: ${inc>0?Math.round((inc-exp)/inc*100):0}%\nClosing Balance: ${fmt(carry+inc-exp)}\n\nEXPENSE BREAKDOWN\n${'─'.repeat(30)}\n`;Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([c,a])=>txt+=`${c}: ${fmt(a)}\n`);txt+=`\nGenerated by SpendSense · ${new Date().toLocaleDateString('en-IN')}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download=`spendsense_${vm}.txt`;document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('📊 Exported!');};
+
+  const greet=()=>{const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';return name?`${g}, ${name.split(' ')[0]}!`:'SpendSense';};
+
+  return <>
+    <div className="page">
+      {tab==='home'&&<>
+        <div className="hdr">
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:48,height:48,borderRadius:16,background:'rgba(245,200,66,.1)',border:'1px solid rgba(245,200,66,.2)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0,gap:1}}>
+            <span style={{fontSize:22,lineHeight:1,color:'var(--gold)',fontWeight:900}}>₹</span>
+            <span style={{fontSize:6,fontWeight:800,color:'var(--gold)',letterSpacing:1,opacity:.8,fontFamily:"'JetBrains Mono',monospace"}}>SPEND</span>
+          </div>
+          <div>
+            <div className="heye">Welcome</div>
+            <div className="htitle">{greet()}</div>
+          </div>
+        </div>
+      </div>
+        <BalCard txns={txns} vm={vm}/>
+        <div className="msel"><button className="marr" onClick={()=>chMonth(-1)}>‹</button><div className="mlab">{mlabel(vm)}</div><button className="mtoday" onClick={()=>setVm(mk(today()))}>Today</button><button className="marr" onClick={()=>chMonth(1)}>›</button></div>
+        <HomeTab txns={txns} budgets={budgets} bills={bills} vm={vm} onAdd={init=>setAddInit(init)} onEdit={id=>{const t=txns.find(x=>x.id===id);if(t)setAddInit({txn:t});}} onDel={id=>setDelId(id)} onBudget={()=>setBudModal(true)}/>
+      </>}
+      {tab==='analytics'&&<>
+        <div className="hdr"><div><div className="heye">Insights</div><div className="htitle">Analytics</div></div><div style={{display:'flex',gap:6,alignItems:'center'}}><button className="marr" onClick={()=>chMonth(-1)}>‹</button><span style={{fontSize:12,fontWeight:700,color:'var(--t2)',minWidth:72,textAlign:'center'}}>{new Date(vm+'-01').toLocaleDateString('en-IN',{month:'short',year:'2-digit'})}</span><button className="marr" onClick={()=>chMonth(1)}>›</button></div></div>
+        <AnalyticsTab txns={txns} vm={vm}/>
+      </>}
+      {tab==='planning'&&<>
+        <div className="hdr"><div><div className="heye">Goals & Finance</div><div className="htitle">Planning</div></div></div>
+        <PlanningTab txns={txns} setTxns={setTxns} goals={goals} bills={bills} budgets={budgets} totalBudget={totalBudget} vm={vm} setGoals={g=>{setGoals(g);}} setBills={b=>setBills(b)} setTotalBudget={v=>{setTotalBudget(v);}} debts={debts} setDebts={setDebts} onConfetti={()=>setConfetti(true)} toast={showToast}/>
+      </>}
+      {tab==='history'&&<>
+        <div className="hdr"><div><div className="heye">All Time</div><div className="htitle">History</div></div><button className="hbtn" onClick={exportCSV}>⬇ CSV</button></div>
+        <HistoryTab txns={txns} onEdit={id=>{const t=txns.find(x=>x.id===id);if(t)setAddInit({txn:t});}} onDel={id=>setDelId(id)}/>
+      </>}
+      {tab==='settings'&&<>
+        <div className="hdr"><div><div className="heye">SpendSense</div><div className="htitle">Settings</div></div></div>
+        <SettingsTab txns={txns} budgets={budgets} name={name} setName={setName} onBudget={()=>setBudModal(true)} onCSV={exportCSV} onReport={exportReport} onClear={()=>{setTxns([]);setBudgets({});setTotalBudget(0);setGoals([]);setBills([]);setDebts([]);setChallenges([]);showToast('🗑️ Cleared');}}/>
+      </>}
+      <NavBar tab={tab} setTab={setTab} onAdd={()=>setAddInit({})}/>
+    </div>
+
+    {addInit&&<AddScreen init={addInit} onSave={saveTxn} onClose={()=>setAddInit(null)} toast={showToast}/>}
+    {budModal&&<BudgetModal budgets={budgets} txns={txns} viewMonth={vm} onSave={b=>{setBudgets(b);setBudModal(false);showToast('✅ Budgets saved!');}} onClose={()=>setBudModal(false)}/>}
+    {delId&&<Modal title="Delete transaction?" sub="This cannot be undone." emoji="🗑️" onClose={()=>setDelId(null)}>
+      <div style={{display:'flex',gap:8}}>
+        <button style={{flex:1,padding:14,borderRadius:13,border:'1.5px solid var(--b2)',background:'none',color:'var(--text)',fontSize:14,fontWeight:700,cursor:'pointer'}} onClick={()=>setDelId(null)}>Cancel</button>
+        <button style={{flex:1,padding:14,borderRadius:13,border:'1.5px solid rgba(255,107,107,.3)',background:'rgba(255,107,107,.1)',color:'var(--red)',fontSize:14,fontWeight:700,cursor:'pointer'}} onClick={()=>{setTxns(p=>p.filter(t=>t.id!==delId));setDelId(null);showToast('🗑️ Deleted');}}>Delete</button>
+      </div>
+    </Modal>}
+    {toast&&<Toast msg={toast} done={()=>setToast(null)}/>}
+    {confetti&&<Confetti onDone={()=>setConfetti(false)}/>}
+  </>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
